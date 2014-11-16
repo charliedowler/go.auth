@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"time"
 )
-
+var tkn string
 // AuthHandler is an HTTP Handler that authenticates an http.Request using
 // the specified AuthProvider.
 type AuthHandler struct {
@@ -64,6 +64,9 @@ func (self *AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Get the authenticated user Id
 	u, t, err := self.provider.GetAuthenticatedUser(w, r)
+
+	tkn = t.Token()
+
 	if err != nil {
 		// If there was a problem, invoke failure
 		if self.Failure == nil {
@@ -124,7 +127,7 @@ type AuthConfig struct {
 	CookieHttpOnly        bool
 	LoginRedirect         string
 	LoginSuccessRedirect  string
-	
+
 }
 
 // Config is the default implementation of Config, and is used by
@@ -189,7 +192,7 @@ func SecureFunc(handler http.HandlerFunc) http.HandlerFunc {
 			http.Redirect(w, r, Config.LoginRedirect, http.StatusSeeOther)
 			return
 		}
-
+		r.Header.Set("oauth_token", tkn)
 		//else, add the user to the URL and continue
 		r.URL.User = url.User(user.Id())
 		handler(w, r)
